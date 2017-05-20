@@ -11,7 +11,6 @@ import itertools
 import conversions
 from multiprocessing import Process
 
-services = {}
 
 class colors:
     white = "\033[1;37m"
@@ -58,9 +57,7 @@ banner = colors.red + r"""
 + '\n Inspired by: Leon Johnson/@sho-luv' + colors.normal + '\n'
 #ascii art by: Cara Pearson
 
-def make_dic_gnmap():
-    global services
-    port = None
+def make_dic_gnmap(args):
     with open(args.file, 'r') as nmap_file:
         for line in nmap_file:
             supported = ['ssh','ftp','postgresql','telnet',
@@ -90,10 +87,10 @@ def make_dic_gnmap():
                             services[name][tmp_port] = ip
                     else:
                         services[name] = {tmp_port:ip}
+    return services
 
 
-def make_dic_xml():
-    global services
+def make_dic_xml(args):
     supported = ['ssh','ftp','postgresql','telnet',
                 'mysql','ms-sql-s','shell','vnc',
                 'imap','imaps','nntp','pcanywheredata',
@@ -150,9 +147,10 @@ def make_dic_xml():
                          services[name][tmp_port] = iplist
                     else:
                         services[name] = {tmp_port:iplist}
+    return services
 
 
-def brute(service,port,fname):  
+def brute(service,port,fname,args):
 
     if args.userlist is None and args.username is None:
         userlist = 'wordlist/'+service+'/user'
@@ -243,9 +241,9 @@ if __name__ == "__main__":
 
     try:
         doc = xml.dom.minidom.parse(args.file)
-        make_dic_xml()
+        services = make_dic_xml(args)
     except:
-        make_dic_gnmap()
+        services = make_dic_gnmap(args)
     animate()
     
     to_scan = args.service.split(',')
@@ -258,5 +256,5 @@ if __name__ == "__main__":
                 for ip in iplist:
                     f.write(ip + '\n')
                 f.close()
-                brute_process = Process(target = brute, args=(service,port,fname))
+                brute_process = Process(target=brute, args=(service,port,fname,args))
                 brute_process.start()
