@@ -8,6 +8,7 @@ import re
 import argparse
 import argcomplete
 import itertools
+import conversions
 from multiprocessing import Process
 
 services = {}
@@ -62,7 +63,11 @@ def make_dic_gnmap():
     port = None
     with open(args.file, 'r') as nmap_file:
         for line in nmap_file:
-            supported = ['ssh','ftp','postgres','telnet','mysql','ms-sql-s','shell','vnc','imap','imaps','nntp','pcanywheredata','pop3','pop3s','exec','login','microsoft-ds','smtp', 'smtps','submission','svn','iss-realsecure']
+            supported = ['ssh','ftp','postgresql','telnet',
+                        'mysql','ms-sql-s','shell','vnc',
+                        'imap','imaps','nntp','pcanywheredata',
+                        'pop3','pop3s','exec','login','microsoft-ds',
+                        'smtp', 'smtps','submission','svn','iss-realsecure']
             for name in supported:
                 matches = re.compile(r'([0-9][0-9]*)/open/[a-z][a-z]*//' + name)
                 try:
@@ -73,38 +78,27 @@ def make_dic_gnmap():
                 ip = re.findall( r'[0-9]+(?:\.[0-9]+){3}', line)
                 tmp_ports = matches.findall(line)
                 for tmp_port in tmp_ports:
-                        if name =="ms-sql-s":
-                            name = "mssql"
-                        if name == "microsoft-ds":
-                            name = "smbnt"
-                        if name == "pcanywheredata":
-                            name = "pcanywhere"
-                        if name == "shell":
-                            name = "rsh"
-                        if name == "exec":
-                            name = "rexec"
-                        if name == "login":
-                            name = "rlogin"
-                        if name == "smtps" or name == "submission":
-                            name = "smtp"
-                        if name == "imaps":
-                            name = "imap"
-                        if name == "pop3s":
-                            name = "pop3"
-                        if name == "iss-realsecure":
-                            name = "vmauthd"
-                        if name in services:
-                            if tmp_port in services[name]:
-                                services[name][tmp_port] += ip
-                            else:
-                                services[name][tmp_port] = ip
+                    try:
+                        name = conversions.nmap_to_medusa[name]
+                    except KeyError:
+                        pass
+
+                    if name in services:
+                        if tmp_port in services[name]:
+                            services[name][tmp_port] += ip
                         else:
-                            services[name] = {tmp_port:ip}
+                            services[name][tmp_port] = ip
+                    else:
+                        services[name] = {tmp_port:ip}
 
 
 def make_dic_xml():
     global services
-    supported = ['ssh','ftp','postgresql','telnet','mysql','ms-sql-s','rsh','vnc','imap','imaps','nntp','pcanywheredata','pop3','pop3s','exec','login','microsoft-ds','smtp','smtps','submission','svn','iss-realsecure']
+    supported = ['ssh','ftp','postgresql','telnet',
+                'mysql','ms-sql-s','shell','vnc',
+                'imap','imaps','nntp','pcanywheredata',
+                'pop3','pop3s','exec','login','microsoft-ds',
+                'smtp','smtps','submission','svn','iss-realsecure']
     doc = xml.dom.minidom.parse(args.file)
 
     for host in doc.getElementsByTagName("host"):
@@ -144,28 +138,11 @@ def make_dic_xml():
                 name = port_name.encode("utf-8")
                 tmp_port = pn.encode("utf-8")
                 if name in supported:
-                    if name == "postgresql":
-                        name = "postgres"
-                    if name =="ms-sql-s":
-                        name = "mssql"
-                    if name == "microsoft-ds":
-                        name = "smbnt"
-                    if name == "pcanywheredata":
-                        name = "pcanywhere"
-                    if name == "shell":
-                        name = "rsh"
-                    if name == "exec":
-                        name = "rexec"
-                    if name == "login":
-                        name = "rlogin"
-                    if name == "smtps" or name == "submission":
-                        name = "smtp"
-                    if name == "imaps":
-                        name = "imap"
-                    if name == "pop3s":
-                        name = "pop3"
-                    if name == "iss-realsecure":
-                        name = "vmauthd"
+                    try:
+                        name = conversions.nmap_to_medusa[name]
+                    except KeyError:
+                        pass
+
                     if name in services:
                         if tmp_port in services[name]:
                             services[name][tmp_port] += iplist
@@ -235,29 +212,18 @@ def parse_args():
     "Usage: python brutemap.py <OPTIONS> \n")
 
     menu_group = parser.add_argument_group(colors.lightblue + 'Menu Options' + colors.normal)
-    
     menu_group.add_argument('-f', '--file', help="GNMAP or XML file to parse", required=True)
-    
     menu_group.add_argument('-s', '--service', help="specify service to attack", default="all")
-
     menu_group.add_argument('-t', '--threads', help="number of medusa threads", default="2")
-    
     menu_group.add_argument('-T', '--hosts', help="number of hosts to test concurrently", default="1")
-
     menu_group.add_argument('-U', '--userlist', help="reference a custom username file", default=None)
-
     menu_group.add_argument('-P', '--passlist', help="reference a custom password file", default=None)
-
     menu_group.add_argument('-u', '--username', help="specify a single username", default=None)
-    
     menu_group.add_argument('-p', '--password', help="specify a single password", default=None)
-
     menu_group.add_argument('-c', '--continuous', help="keep brute-forcing after success", default=False, action='store_true')
     
     argcomplete.autocomplete(parser)    
-   
     args = parser.parse_args()
-    
     return args
 
 
