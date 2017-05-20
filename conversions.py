@@ -6,6 +6,7 @@ nmap_to_medusa = {
 'pcanywheredata':'pcanywhere',
 'shell':'rsh',
 'exec':'rexec',
+'postgresql':'postgres',
 'login':'rlogin',
 'smtps':'smtp',
 'submission':'smtp',

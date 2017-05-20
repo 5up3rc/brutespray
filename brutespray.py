@@ -179,7 +179,9 @@ def brute(service,port,fname):
     else:
         cont = '-F'
     
-    p = subprocess.Popen(['medusa', '-H', fname, uarg, userlist, parg, passlist, '-M', service, '-t', args.threads, '-n', port, '-T', args.hosts, cont], stdout=subprocess.PIPE, stderr=subprocess.PIPE, bufsize=-1)
+    p = subprocess.Popen(['medusa', '-H', fname, uarg, userlist, parg, passlist, '-M', service, '-t', args.threads, '-n', port, '-T', args.hosts, cont],
+                        stdout=subprocess.PIPE,
+                        stderr=subprocess.PIPE, bufsize=-1)
 
     out = "[" + colors.green + "+" + colors.normal + "] "
     output = 'output/' + service + '-success.txt'
